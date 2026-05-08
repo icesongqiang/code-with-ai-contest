@@ -2,7 +2,7 @@
 
 **团队名称：** AI 4 Whatever
 **成员名单：** 宋强 00452518, 林波 00478505, 刘磊 00845054
-**使用的 AI Coding Agent 工具：** nga (本对话)
+**使用的 AI Coding Agent 工具：** opencode (本对话)
 
 ---
 
