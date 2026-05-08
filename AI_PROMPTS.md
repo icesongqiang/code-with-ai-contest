@@ -118,7 +118,101 @@
 
 ---
 
+### 第十轮：完成进阶关卡
+
+**用户 prompt：**
+> 继续完成进阶关卡
+
+**AI response：**
+实现进阶关卡三项功能：
+1. 侧边栏联动筛选（频段多选、RSRP滑动条、终端类型多选）
+2. 3D地图（ColumnLayer，高度随下载速率变化，pitch=45）
+3. 实时联动（筛选器变化时地图和图表自动更新）
+
+---
+
+### 第十一轮：补充单元测试
+
+**用户 prompt：**
+> ut测试在哪里
+
+**AI response：**
+创建了 tests/test_app.py，包含7个测试用例：
+- 数据加载测试（3个）
+- 颜色映射测试（3个）
+- RSRP阈值测试（1个）
+- 全部通过验证
+
+---
+
 ## 关键代码片段
+
+### 侧边栏筛选器
+```python
+st.sidebar.header("🔍 数据筛选")
+selected_bands = st.sidebar.multiselect("选择频段", bands, default=bands)
+rsrp_range = st.sidebar.slider("RSRP 范围 (dBm)", rsrp_min, rsrp_max, (rsrp_min, rsrp_max))
+selected_terminals = st.sidebar.multiselect("终端类型", terminals, default=terminals)
+
+df_filtered = df[
+    (df['Band'].isin(selected_bands)) &
+    (df['RSRP_dBm'] >= rsrp_range[0]) &
+    (df['RSRP_dBm'] <= rsrp_range[1]) &
+    (df['TerminalType'].isin(selected_terminals))
+]
+```
+
+### 3D地图（ColumnLayer）
+```python
+layer = pdk.Layer(
+    'ColumnLayer',
+    df_map,
+    get_position='[Longitude, Latitude]',
+    get_fill_color='color',
+    get_radius=50,
+    pickable=True,
+    elevation_scale=1,
+    elevation_range=[0, 500],
+    extruded=True,
+)
+
+st.pydeck_chart(pdk.Deck(
+    initial_view_state=pdk.ViewState(
+        latitude=df_filtered['Latitude'].mean(),
+        longitude=df_filtered['Longitude'].mean(),
+        zoom=12,
+        pitch=45,
+    ),
+    layers=[layer],
+))
+```
+
+### 单元测试
+```python
+class TestDataLoading:
+    def test_load_data_returns_dataframe(self):
+        df = load_data()
+        assert isinstance(df, pd.DataFrame)
+
+    def test_load_data_has_required_columns(self):
+        df = load_data()
+        required_cols = ['Latitude', 'Longitude', 'Band', 'RSRP_dBm', 'TerminalType', 'Download_Mbps']
+        for col in required_cols:
+            assert col in df.columns
+
+class TestColorMapping:
+    def test_strong_signal_green(self):
+        assert get_color(-80) == [0, 255, 0]
+```
+
+---
+
+## 运行说明
+
+1. 安装依赖：`pip install -r requirements.txt`
+2. 启动应用：`streamlit run app.py`
+3. 浏览器访问：http://localhost:8501
+4. 运行测试：`pytest tests/test_app.py -v`
 
 ### 数据加载
 ```python
